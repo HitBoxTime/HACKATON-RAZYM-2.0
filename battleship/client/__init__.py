@@ -1,1 +1,1 @@
-# client pack
+# Client package
