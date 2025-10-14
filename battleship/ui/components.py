@@ -12,13 +12,12 @@ class Button:
     def draw(self, screen):
         color = self.hover_color if self.is_hovered else self.color
         pygame.draw.rect(screen, color, self.rect)
-        pygame.draw.rect(screen, (0, 0, 0), self.rect, 2)  # Border
+        pygame.draw.rect(screen, (0, 0, 0), self.rect, 2)
         
         text_surface = self.font.render(self.text, True, (0, 0, 0))
         text_rect = text_surface.get_rect(center=self.rect.center)
         screen.blit(text_surface, text_rect)
-        
-        # Update hover state
+
         mouse_pos = pygame.mouse.get_pos()
         self.is_hovered = self.rect.collidepoint(mouse_pos)
     
@@ -31,21 +30,18 @@ class BoardRenderer:
         self.font = pygame.font.SysFont('Arial', 20)
     
     def draw_board(self, screen, board, x, y, show_ships=True):
-        # Draw grid
         for i in range(board.size + 1):
             pygame.draw.line(screen, (0, 0, 0), (x, y + i * self.cell_size), 
                              (x + board.size * self.cell_size, y + i * self.cell_size), 2)
             pygame.draw.line(screen, (0, 0, 0), (x + i * self.cell_size, y), 
                              (x + i * self.cell_size, y + board.size * self.cell_size), 2)
         
-        # Draw letters and numbers
         for i in range(board.size):
             letter = self.font.render(chr(65 + i), True, (0, 0, 0))
             number = self.font.render(str(i + 1), True, (0, 0, 0))
             screen.blit(letter, (x + i * self.cell_size + self.cell_size // 2 - 5, y - 30))
             screen.blit(number, (x - 30, y + i * self.cell_size + self.cell_size // 2 - 10))
         
-        # Draw ships
         if show_ships:
             for ship in board.ships:
                 for pos in ship.positions:
@@ -54,37 +50,35 @@ class BoardRenderer:
                                     (x + px * self.cell_size + 2, y + py * self.cell_size + 2, 
                                      self.cell_size - 4, self.cell_size - 4))
         
-        # Draw shots
         for i in range(board.size):
             for j in range(board.size):
                 if board.shots[j][i]:
-                    if board.grid[j][i] == 1:  # Hit
+                    if board.grid[j][i] == 1:
                         pygame.draw.circle(screen, (255, 0, 0), 
                                           (x + i * self.cell_size + self.cell_size // 2, 
                                            y + j * self.cell_size + self.cell_size // 2), 
                                           self.cell_size // 3)
-                    else:  # Miss
+                    else:
                         pygame.draw.circle(screen, (0, 0, 255), 
                                           (x + i * self.cell_size + self.cell_size // 2, 
                                            y + j * self.cell_size + self.cell_size // 2), 
                                           self.cell_size // 6)
     
     def draw_ship_preview(self, screen, ship_size, orientation, x, y, board_x, board_y):
-        # Check if ship can be placed (simplified check)
         can_place = True
-        if orientation == 0:  # Horizontal
+        if orientation == 0:
             if x + ship_size > 10:
                 can_place = False
-        else:  # Vertical
+        else:
             if y + ship_size > 10:
                 can_place = False
         
         color = (0, 255, 0) if can_place else (255, 0, 0)
-        if orientation == 0:  # Horizontal
+        if orientation == 0:
             pygame.draw.rect(screen, color, 
                             (board_x + x * self.cell_size, board_y + y * self.cell_size, 
                              ship_size * self.cell_size, self.cell_size), 3)
-        else:  # Vertical
+        else:
             pygame.draw.rect(screen, color, 
                             (board_x + x * self.cell_size, board_y + y * self.cell_size, 
                              self.cell_size, ship_size * self.cell_size), 3)

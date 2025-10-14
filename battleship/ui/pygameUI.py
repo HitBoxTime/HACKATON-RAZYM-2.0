@@ -39,28 +39,23 @@ class PyGameUI:
     
     def handle_click(self, mouse_x, mouse_y):
         if self.game.game_state == "placing":
-            # Определяем поле текущего игрока
             current_board_x = self.board1_x if self.game.placing_player == 1 else self.board2_x
             
-            # Клик по полю текущего игрока
             if (current_board_x <= mouse_x < current_board_x + 10 * self.cell_size and 
                 self.board_y <= mouse_y < self.board_y + 10 * self.cell_size):
                 cell_x = (mouse_x - current_board_x) // self.cell_size
                 cell_y = (mouse_y - self.board_y) // self.cell_size
                 self.game.place_ship_click(cell_x, cell_y)
             
-            # Кнопка авторасстановки
             if (self.screen_width // 2 - 100 <= mouse_x < self.screen_width // 2 + 100 and 
                 self.board_y + 10 * self.cell_size + 20 <= mouse_y < self.board_y + 10 * self.cell_size + 60):
                 self.game.auto_place_ships()
             
-            # Кнопка поворота корабля
             if (self.screen_width // 2 - 100 <= mouse_x < self.screen_width // 2 + 100 and 
                 self.board_y + 10 * self.cell_size + 70 <= mouse_y < self.board_y + 10 * self.cell_size + 110):
                 self.game.rotate_ship()
         
         elif self.game.game_state == "playing":
-            # Клик по полю противника
             opponent_board_x = self.board2_x if self.game.current_player == 1 else self.board1_x
             
             if (opponent_board_x <= mouse_x < opponent_board_x + 10 * self.cell_size and 
@@ -73,27 +68,23 @@ class PyGameUI:
                     self.game.fire(cell_x, cell_y)
         
         elif self.game.game_state == "game_over":
-            # Кнопка новой игры - ИСПРАВЛЕНЫ КООРДИНАТЫ
             if (self.screen_width // 2 - 100 <= mouse_x < self.screen_width // 2 + 100 and 
                 self.board_y + 10 * self.cell_size + 20 <= mouse_y < self.board_y + 10 * self.cell_size + 60):
                 self.game.reset_game()
     
     def draw_board(self, board, x, y, show_ships=True):
-        # Рисуем сетку
         for i in range(11):
             pygame.draw.line(self.screen, (0, 0, 0), (x, y + i * self.cell_size), 
                              (x + 10 * self.cell_size, y + i * self.cell_size), 2)
             pygame.draw.line(self.screen, (0, 0, 0), (x + i * self.cell_size, y), 
                              (x + i * self.cell_size, y + 10 * self.cell_size), 2)
         
-        # Рисуем буквы и цифры
         for i in range(10):
             letter = self.font.render(chr(65 + i), True, (0, 0, 0))
             number = self.font.render(str(i + 1), True, (0, 0, 0))
             self.screen.blit(letter, (x + i * self.cell_size + self.cell_size // 2 - 5, y - 30))
             self.screen.blit(number, (x - 30, y + i * self.cell_size + self.cell_size // 2 - 10))
         
-        # Рисуем корабли
         if show_ships:
             for ship in board.ships:
                 for pos in ship.positions:
@@ -102,16 +93,15 @@ class PyGameUI:
                                     (x + px * self.cell_size + 2, y + py * self.cell_size + 2, 
                                      self.cell_size - 4, self.cell_size - 4))
         
-        # Рисуем выстрелы
         for i in range(10):
             for j in range(10):
                 if board.shots[j][i]:
-                    if board.grid[j][i] == 1:  # Попадание
+                    if board.grid[j][i] == 1:
                         pygame.draw.circle(self.screen, (255, 0, 0), 
                                           (x + i * self.cell_size + self.cell_size // 2, 
                                            y + j * self.cell_size + self.cell_size // 2), 
                                           self.cell_size // 3)
-                    else:  # Промах
+                    else:
                         pygame.draw.circle(self.screen, (0, 0, 255), 
                                           (x + i * self.cell_size + self.cell_size // 2, 
                                            y + j * self.cell_size + self.cell_size // 2), 
@@ -122,21 +112,20 @@ class PyGameUI:
             ship_size = self.game.selected_ship_size
             orientation = self.game.ship_orientation
             
-            # Проверка границ
             can_place = True
-            if orientation == 0:  # Горизонтально
+            if orientation == 0:
                 if x + ship_size > 10:
                     can_place = False
-            else:  # Вертикально
+            else:
                 if y + ship_size > 10:
                     can_place = False
             
             color = (0, 255, 0) if can_place else (255, 0, 0)
-            if orientation == 0:  # Горизонтально
+            if orientation == 0:
                 pygame.draw.rect(self.screen, color, 
                                 (board_x + x * self.cell_size, board_y + y * self.cell_size, 
                                  ship_size * self.cell_size, self.cell_size), 3)
-            else:  # Вертикально
+            else:
                 pygame.draw.rect(self.screen, color, 
                                 (board_x + x * self.cell_size, board_y + y * self.cell_size, 
                                  self.cell_size, ship_size * self.cell_size), 3)
@@ -157,11 +146,9 @@ class PyGameUI:
     def draw(self):
         self.screen.fill((255, 255, 255))
         
-        # Заголовок
         title = self.title_font.render("МОРСКОЙ БОЙ - ЛОКАЛЬНАЯ ИГРА", True, (0, 0, 139))
         self.screen.blit(title, (self.screen_width // 2 - title.get_width() // 2, 20))
         
-        # Имена игроков с указанием текущего
         player1_text = "Игрок 1" + (" (РАССТАВЛЯЕТ)" if self.game.placing_player == 1 and self.game.game_state == "placing" else "")
         player2_text = "Игрок 2" + (" (РАССТАВЛЯЕТ)" if self.game.placing_player == 2 and self.game.game_state == "placing" else "")
         
@@ -171,16 +158,13 @@ class PyGameUI:
         self.screen.blit(player1_surface, (self.board1_x + 10 * self.cell_size // 2 - player1_surface.get_width() // 2, self.board_y - 60))
         self.screen.blit(player2_surface, (self.board2_x + 10 * self.cell_size // 2 - player2_surface.get_width() // 2, self.board_y - 60))
         
-        # Рисуем поля
         if self.game.game_state == "placing":
-            # Показываем корабли только у текущего игрока, скрываем у противника
             show_ships_player1 = (self.game.placing_player == 1)
             show_ships_player2 = (self.game.placing_player == 2)
             
             self.draw_board(self.game.player1_board, self.board1_x, self.board_y, show_ships=show_ships_player1)
             self.draw_board(self.game.player2_board, self.board2_x, self.board_y, show_ships=show_ships_player2)
             
-            # Предпросмотр корабля для текущего игрока
             current_board_x = self.board1_x if self.game.placing_player == 1 else self.board2_x
             
             mouse_x, mouse_y = pygame.mouse.get_pos()
@@ -189,25 +173,20 @@ class PyGameUI:
                 cell_x = (mouse_x - current_board_x) // self.cell_size
                 cell_y = (mouse_y - self.board_y) // self.cell_size
                 self.draw_ship_preview(cell_x, cell_y, current_board_x, self.board_y)
-            
-            # Сообщение
+
             message_text = self.font.render(self.game.message, True, (0, 0, 0))
             self.screen.blit(message_text, (self.screen_width // 2 - message_text.get_width() // 2, self.board_y + 10 * self.cell_size - 30))
             
-            # Счет
             score_text = self.font.render(f"Счет: Игрок 1 - {self.game.score_manager.get_score(1)} | Игрок 2 - {self.game.score_manager.get_score(2)}", True, (0, 0, 0))
             self.screen.blit(score_text, (self.screen_width // 2 - score_text.get_width() // 2, self.board_y + 10 * self.cell_size - 5))
             
-            # Кнопки
             self.draw_button(self.screen_width // 2 - 100, self.board_y + 10 * self.cell_size + 20, 200, 40, "Авторасстановка")
             self.draw_button(self.screen_width // 2 - 100, self.board_y + 10 * self.cell_size + 70, 200, 40, "Повернуть корабль")
             
-            # Информация о текущем корабле
             ship_info = f"Размещаемый корабль: {self.game.selected_ship_size}-палубный"
             info_surface = self.font.render(ship_info, True, (0, 0, 139))
             self.screen.blit(info_surface, (self.screen_width // 2 - info_surface.get_width() // 2, self.board_y + 10 * self.cell_size + 120))
             
-            # Счетчик кораблей
             ships_left = sum(self.game.available_ships[size] - self.game.placed_ships[size] 
                            for size in [4, 3, 2, 1])
             counter_text = f"Осталось разместить: {ships_left} кораблей"
@@ -215,7 +194,6 @@ class PyGameUI:
             self.screen.blit(counter_surface, (self.screen_width // 2 - counter_surface.get_width() // 2, self.board_y + 10 * self.cell_size + 150))
         
         elif self.game.game_state == "playing":
-            # Показываем поле текущего игрока с кораблями и поле противника без кораблей
             current_board = self.game.get_current_board()
             opponent_board = self.game.get_opponent_board()
             
@@ -225,15 +203,12 @@ class PyGameUI:
             self.draw_board(current_board, board_x, self.board_y, show_ships=True)
             self.draw_board(opponent_board, opp_board_x, self.board_y, show_ships=False)
             
-            # Сообщение
             message_text = self.font.render(self.game.message, True, (0, 0, 0))
             self.screen.blit(message_text, (self.screen_width // 2 - message_text.get_width() // 2, self.board_y + 10 * self.cell_size - 30))
             
-            # Счет
             score_text = self.font.render(f"Счет: Игрок 1 - {self.game.score_manager.get_score(1)} | Игрок 2 - {self.game.score_manager.get_score(2)}", True, (0, 0, 0))
             self.screen.blit(score_text, (self.screen_width // 2 - score_text.get_width() // 2, self.board_y + 10 * self.cell_size - 5))
             
-            # Индикатор хода
             turn_indicator = "ВАШ ХОД" if self.game.current_player == 1 else "ХОД ПРОТИВНИКА"
             turn_color = (0, 150, 0) if self.game.current_player == 1 else (200, 0, 0)
             turn_surface = self.font.render(turn_indicator, True, turn_color)
@@ -241,17 +216,13 @@ class PyGameUI:
                                           self.board_y + 10 * self.cell_size + 30))
         
         elif self.game.game_state == "game_over":
-            # После игры показываем все корабли
             self.draw_board(self.game.player1_board, self.board1_x, self.board_y, show_ships=True)
             self.draw_board(self.game.player2_board, self.board2_x, self.board_y, show_ships=True)
             
-            # Сообщение
             message_text = self.font.render(self.game.message, True, (0, 0, 0))
             self.screen.blit(message_text, (self.screen_width // 2 - message_text.get_width() // 2, self.board_y + 10 * self.cell_size - 30))
             
-            # Счет
             score_text = self.font.render(f"Счет: Игрок 1 - {self.game.score_manager.get_score(1)} | Игрок 2 - {self.game.score_manager.get_score(2)}", True, (0, 0, 0))
             self.screen.blit(score_text, (self.screen_width // 2 - score_text.get_width() // 2, self.board_y + 10 * self.cell_size - 5))
             
-            # Кнопка новой игры
             self.draw_button(self.screen_width // 2 - 100, self.board_y + 10 * self.cell_size + 20, 200, 40, "Новая игра")

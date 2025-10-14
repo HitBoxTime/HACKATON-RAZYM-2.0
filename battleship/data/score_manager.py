@@ -15,7 +15,6 @@ class ScoreManager:
                     self.scores[1] = data.get("player1", 0)
                     self.scores[2] = data.get("player2", 0)
             except:
-                # If there's an error loading, reset scores
                 self.scores = {1: 0, 2: 0}
     
     def save_scores(self):

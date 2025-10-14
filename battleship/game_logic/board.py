@@ -1,12 +1,6 @@
 from game_logic.ship import Ship
 import random
 
-"""
-Этот файл является логикой игрового поля
-
-"""
-
-
 class Board:
     def __init__(self, player_name):
         self.player_name = player_name

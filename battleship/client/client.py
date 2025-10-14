@@ -3,7 +3,6 @@ import threading
 import json
 import pygame
 
-
 from ui.networkUI import MultiplayerUI
 from game_logic.core import Game
 
@@ -11,29 +10,48 @@ class BattleshipClient:
     def __init__(self, host='localhost', port=5555):
         self.host = host
         self.port = port
-        self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.client_socket = None
+        self.setup_client()
         
-        self.player_id = None
-        self.game = Game()
-        self.ui = None
-        self.connected = False
+    def setup_client(self):
+        try:
+            self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.client_socket.settimeout(10)
+        except Exception as e:
+            print(f"Ошибка создания сокета: {e}")
+            raise
+    
+    def safe_send(self, message_deict):
+        try: 
+            json_data = json.dumps(message_deict, ensure_ascii=False)
+            data = (json_data + '\n').encode('utf-8')
+            self.client_socket.send(data)
+            return True
         
-        # Данные для чата
-        self.chat_messages = []
+        except Exception as e:
+            print(e)
+            return False
         
     def connect(self):
         try:
+            print(f"Подключаюсь к {self.host}:{self.port}...")
             self.client_socket.connect((self.host, self.port))
             self.connected = True
-            print("Подключение к серверу установлено")
+            print("✓ Успешное подключение к серверу!")
             
             receive_thread = threading.Thread(target=self.receive_messages)
             receive_thread.daemon = True
             receive_thread.start()
             
             return True
+        except socket.timeout:
+            print("✗ Таймаут подключения. Сервер не отвечает.")
+            return False
+        except ConnectionRefusedError:
+            print("✗ Сервер отверг подключение. Убедитесь что сервер запущен.")
+            return False
         except Exception as e:
-            print(f"Ошибка подключения: {e}")
+            print(f"✗ Ошибка подключения: {e}")
             return False
     
     def receive_messages(self):
@@ -74,6 +92,7 @@ class BattleshipClient:
             self.player_id = message["player_ids"][self.player_id]
             self.game.current_player = message["current_player"]
             self.game.message = "Игра началась!" if self.game.current_player == self.player_id else "Ход противника"
+            print("Игра началась!")
         
         elif msg_type == "chat_update":
             self.chat_messages = message["messages"]
@@ -92,6 +111,7 @@ class BattleshipClient:
         elif msg_type == "game_over":
             self.game.game_state = "game_over"
             self.game.message = message["message"]
+            print(f"Игра окончена: {message['message']}")
         
         elif msg_type == "player_ready":
             ready_player = "Вы" if message["player"] == self.player_id else "Противник"
@@ -137,7 +157,14 @@ class BattleshipClient:
         })
     
     def run(self):
+        self.player_id = None
+        self.game = Game()
+        self.ui = None
+        self.connected = False
+        self.chat_messages = []
+        
         if not self.connect():
+            print("Не удалось подключиться к серверу")
             return
         
         self.ui = MultiplayerUI(self.game, self)
@@ -173,8 +200,7 @@ class BattleshipClient:
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     mouse_pos = pygame.mouse.get_pos()
                     
-                    # Проверка клика по чату
-                    chat_x = self.ui.screen_width - 320
+                    chat_x = self.ui.screen_width - 350
                     chat_y = 120
                     chat_width = 300
                     chat_height = 400
@@ -192,33 +218,29 @@ class BattleshipClient:
             clock.tick(60)
         
         pygame.quit()
-        self.client_socket.close()
-    
+        if self.client_socket:
+            self.client_socket.close()
+
     def handle_click(self, mouse_x, mouse_y):
         board1_x, board2_x, board_y = self.ui.board1_x, self.ui.board2_x, self.ui.board_y
         center_x = self.ui.screen_width // 2
         
-        # Обработка кнопок
-        # ОБНОВЛЕНЫ КООРДИНАТЫ КНОПОК
-        button_y = board_y + 10 * self.ui.cell_size + 10  # Новая координата для кнопок
+        button_y = board_y + 10 * self.ui.cell_size + 10
         
         if self.game.game_state == "waiting":
             if (center_x - 100 <= mouse_x <= center_x + 100 and
-                button_y <= mouse_y <= button_y + 40):
+button_y <= mouse_y <= button_y + 40):
                 self.send_ready()
         
         elif self.game.game_state == "placing":
-            # Авторасстановка
             if (center_x - 100 <= mouse_x <= center_x + 100 and
                 button_y <= mouse_y <= button_y + 40):
                 self.send_auto_place()
             
-            # Поворот корабля
             elif (center_x - 100 <= mouse_x <= center_x + 100 and
                   button_y + 50 <= mouse_y <= button_y + 90):
                 self.game.rotate_ship()
             
-            # Размещение корабля
             elif self.game.placing_player == self.player_id:
                 board_x = board1_x if self.player_id == 1 else board2_x
                 
@@ -233,7 +255,6 @@ class BattleshipClient:
                                                self.game.ship_orientation)
         
         elif self.game.game_state == "playing":
-            # Выстрел
             if self.game.current_player == self.player_id:
                 opponent_board_x = board2_x if self.player_id == 1 else board1_x
                 
@@ -247,7 +268,6 @@ class BattleshipClient:
                         self.send_shot(cell_x, cell_y)
         
         elif self.game.game_state == "game_over":
-            # Кнопка "Новая игра" - ИСПРАВЛЕНЫ КООРДИНАТЫ
             if (center_x - 100 <= mouse_x <= center_x + 100 and
                 button_y <= mouse_y <= button_y + 40):
                 self.game.reset_game()
