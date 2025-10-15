@@ -350,7 +350,6 @@ class MultiplayerUI:
             self.draw_button(center_x - 100, panel_y, 200, 40, "НОВАЯ ИГРА", 
                            (255, 215, 0), (255, 225, 50))
 
-
     def handle_click(self, mouse_x, mouse_y):
         try:
             board1_x, board2_x, board_y = self.board1_x, self.board2_x, self.board_y

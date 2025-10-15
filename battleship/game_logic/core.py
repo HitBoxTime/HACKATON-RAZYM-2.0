@@ -15,6 +15,16 @@ class Game:
         self.available_ships = {4: 1, 3: 2, 2: 3, 1: 4}
         self.placed_ships = {4: 0, 3: 0, 2: 0, 1: 0}
     
+    def switch_turn(self):
+        """Переключение хода между игроками"""
+        if self.current_player == 1:
+            self.current_player = 2
+            self.message = "Ход игрока 2"
+        else:
+            self.current_player = 1
+            self.message = "Ход игрока 1"
+        print(f"Переключение хода: теперь ходит игрок {self.current_player}")
+    
     def switch_player(self):
         """Переключение между игроками при расстановке кораблей"""
         if self.placing_player == 1:
@@ -103,6 +113,13 @@ class Game:
                             return False
         return True
     
+    def rotate_ship(self):
+        self.ship_orientation = 1 - self.ship_orientation
+        orientation_text = "Вертикальная" if  self.ship_orientation == 1 else "Горизонтальная"
+        self.message = f"Ориентация корабля: {orientation_text}"
+        print (f"Поврот корабля: {orientation_text}")
+        return self.ship_orientation
+
     def auto_place_ships(self):
         """Авторасстановка кораблей для текущего игрока"""
         if self.placing_player == 1:
@@ -118,6 +135,40 @@ class Game:
             self.switch_player()
             return True
         return False
+    
+    def fire(self, x, y):
+        """Обработка выстрела в локальной игре"""
+        print(f"Выстрел: игрок {self.current_player} в ({x},{y})")
+        
+        if self.current_player == 1:
+            result = self.player2_board.receive_shot(x, y)
+            target_player = 2
+        else:
+            result = self.player1_board.receive_shot(x, y)
+            target_player = 1
+        
+        print(f"Результат выстрела: {result}")
+        
+        if result == "miss":
+            self.message = f"Игрок {self.current_player} промахнулся!"
+            self.switch_turn()
+        elif result == "hit":
+            self.message = f"Игрок {self.current_player} попал в корабль!"
+        elif result == "sunk":
+            self.message = f"Игрок {self.current_player} потопил корабль!"
+            
+            if target_player == 1:
+                if self.player1_board.all_ships_sunk():
+                    self.game_state = "game_over"
+                    self.message = f"Игрок {self.current_player} победил!"
+                    self.score_manager.add_win(self.current_player)
+                    print(f"Игра окончена! Победил игрок {self.current_player}")
+            else:
+                if self.player2_board.all_ships_sunk():
+                    self.game_state = "game_over"
+                    self.message = f"Игрок {self.current_player} победил!"
+                    self.score_manager.add_win(self.current_player)
+                    print(f"Игра окончена! Победил игрок {self.current_player}")
     
     def reset_game(self):
         """Полный сброс игры для новой партии"""
